@@ -1,0 +1,138 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="">
+
+  <meta property="og:title" content="">
+  <meta property="og:type" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+  <meta property="og:image:alt" content="">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#fafafa">
+</head>
+
+<body>
+
+<div class="container">
+  <div class="center">
+
+    <button class="button button1">Green</button>
+    <button class="button button2">Blue</button>
+    <button>Centered Button</button>
+</div>
+</div>
+
+  <div class="row">
+    <h1>Latest temperature readings</h1>
+  </div>
+
+  <div>
+    <div id="temperatureReadings"></div>
+
+  </div>
+  <script>
+    const temperatureReadingsElement = document.getElementById('temperatureReadings');
+
+    /**
+     * Fetch temperature data from ThingSpeak API
+     *
+     * @see https://se.mathworks.com/help/thingspeak/readfield.html
+     */
+    function fetchTemperature() {
+      fetch(
+        'https://api.thingspeak.com/channels/2658149/feeds/last.json'
+        + '?api_key=XHTJQAJM8B6TBL8S',
+      )
+        .then(function (response) {
+          // Convert to JSON
+          return response.json();
+        })
+        .then(function (data) {
+          console.log('Latest: ', data);
+          if (data.field2>28){
+            console.log("over 28")
+            //start alarm på microbit?
+            alert(location.hostname + "Has detected dangerous heat levels on your batteri!\n The Batteri box needs attention!");
+            //setTimeout() til der er blevet clikket ok?
+          }else{
+
+            // Create new div, set the content of the div, and append it to the readings element
+            const element = document.createElement('div');
+            element.textContent = 'Temp: ' +data.field1 + '°C ___ SoC: '+ data.field2 +' ___ [' + data.created_at + ']';
+            temperatureReadingsElement.append(element);
+          }
+        });
+    }
+
+    // Fetch latest temperature reading every 16 seconds
+    setInterval(fetchTemperature, 1000 * 16);
+
+
+
+    ////////////////////////////
+    // Send data
+    let temperature = 25;
+
+    /**
+     * Returns a range-limited number {n} between {min} and {max}
+     *
+     * @param {number} n - Current Value
+     * @param {number} min - Minimum Value
+     * @param {number} max - Maximum Value
+     * @returns {number}
+     */
+    function clamp(n, min, max) {
+      return Math.min(Math.max(n, min), max);
+    }
+
+    /**
+     * Returns a random number between {min} and {max}
+     *
+     * @param {number} min - Minimum Value
+     * @param {number} max - Maximum Value
+     * @returns {number}
+     */
+    function randomNumber(min, max) {
+      return Math.floor(
+        Math.random() * (max - min + 1)
+      ) + min;
+    }
+
+    // Send new temperature to ThingSpeak every 16 seconds
+    setInterval(function () {
+      // Adjust temperature by a random amount between -5 and 5.
+      const randomAdjustment = randomNumber(-5, 5);
+      // Clamp the resulting temperature to be between 0 and 100.
+      temperature = clamp(temperature + randomAdjustment, 0, 100);
+
+      // Make request to update ThingSpeak channel with new temperature
+      fetch(
+        'https://api.thingspeak.com/update'
+        + '?api_key=DU4IMZVM6J6T5PDX'
+        + '&field1=' + temperature+ '&field2=' + temperature,
+      )
+        .then(function (response) {
+          // Convert to JSON
+          return response.json();
+        })
+        .then(function (data) {
+          // The response from the API will be the entry ID of the new entry
+          console.log(`Entry ${data} added with value: ${temperature}`);
+        });
+    }, 1000 * 16);
+
+  </script>
+</body>
+
+</html>
