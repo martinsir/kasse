@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Gør siden responsiv ved at angive visningsområde -->
 
   <title></title> <!-- Titel på dokumentet, der vises i browserfanen -->
-  <link rel="stylesheet" href="css/style.css"> <!-- Link til det eksterne CSS-stilark -->
+  <link rel="stylesheet" href="./css/style.css"> <!-- Link til det eksterne CSS-stilark -->
   <meta name="description" content=""> <!-- Beskrivelse af siden for søgemaskiner -->
 
   <!-- Open Graph metadata til deling på sociale medier -->
@@ -16,11 +16,11 @@
   <meta property="og:image" content=""> <!-- Billede, der vises ved deling -->
   <meta property="og:image:alt" content=""> <!-- Alternativ tekst til billedet -->
 
-  <link rel="icon" href="/favicon.ico" sizes="any"> <!-- Favicon til siden -->
-  <link rel="icon" href="/icon.svg" type="image/svg+xml"> <!-- SVG-ikon -->
-  <link rel="apple-touch-icon" href="icon.png"> <!-- Ikon til Apple-enheder -->
+  <link rel="icon" href="./img/logo.png" sizes="any"> <!-- Favicon til siden -->
+  <link rel="icon" href="./img/logo.svg" type="image/svg+xml"> <!-- SVG-ikon -->
+  <link rel="apple-touch-icon" href="./img/logo.png"> <!-- Ikon til Apple-enheder -->
 
-  <link rel="manifest" href="site.webmanifest"> <!-- Link til webapp-manifest -->
+  <link rel="manifest" href=""> <!-- Link til webapp-manifest -->
   <meta name="theme-color" content="#fafafa"> <!-- Tema-farve for mobilbrowseren -->
 </head>
 
@@ -29,7 +29,7 @@
 <!-- Container til batteri-ikon og procentvisning -->
 <div class="imgButtons">
   <div class="imButtonsCentered">
-    <img src="img/batteri.png" alt="batteri"> <!-- Batteri-ikon -->
+    <img src="./img/batteri.png" alt="batteri"> <!-- Batteri-ikon -->
     <span id="percentageDisplay">Analyserer %</span> <!-- Dette viser procentdelen -->
   </div>
 </div>
@@ -43,7 +43,7 @@
 
 <!-- Alarm-overlay -->
 <div id="alertOverlay" class="overlay" style="display: none;">
-  <img id="alertImage" src="img/alarm.png" alt="Alarm">
+  <img id="alertImage" src="./img/alarm.png" alt="Alarm">
 </div>
 
 <script>
