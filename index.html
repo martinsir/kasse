@@ -2,137 +2,135 @@
 <html class="no-js" lang="">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-  <link rel="stylesheet" href="css/style.css">
-  <meta name="description" content="">
+  <meta charset="utf-8"> <!-- Angiver tegnkodningen for dokumentet -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Gør siden responsiv ved at angive visningsområde -->
 
-  <meta property="og:title" content="">
-  <meta property="og:type" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
-  <meta property="og:image:alt" content="">
+  <title></title> <!-- Titel på dokumentet, der vises i browserfanen -->
+  <link rel="stylesheet" href="css/style.css"> <!-- Link til det eksterne CSS-stilark -->
+  <meta name="description" content=""> <!-- Beskrivelse af siden for søgemaskiner -->
 
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Open Graph metadata til deling på sociale medier -->
+  <meta property="og:title" content=""> <!-- Angiver titlen, der vises ved deling -->
+  <meta property="og:type" content=""> <!-- Angiver typen af indholdet -->
+  <meta property="og:url" content=""> <!-- URL til indholdet -->
+  <meta property="og:image" content=""> <!-- Billede, der vises ved deling -->
+  <meta property="og:image:alt" content=""> <!-- Alternativ tekst til billedet -->
 
-  <link rel="manifest" href="site.webmanifest">
-  <meta name="theme-color" content="#fafafa">
+  <link rel="icon" href="/favicon.ico" sizes="any"> <!-- Favicon til siden -->
+  <link rel="icon" href="/icon.svg" type="image/svg+xml"> <!-- SVG-ikon -->
+  <link rel="apple-touch-icon" href="icon.png"> <!-- Ikon til Apple-enheder -->
+
+  <link rel="manifest" href="site.webmanifest"> <!-- Link til webapp-manifest -->
+  <meta name="theme-color" content="#fafafa"> <!-- Tema-farve for mobilbrowseren -->
 </head>
 
 <body>
 
-<div class="container">
-  <div class="center">
-
-    <button class="button button1">Green</button>
-    <button class="button button2">Blue</button>
-    <button>Centered Button</button>
-</div>
-</div>
-
-  <div class="row">
-    <h1>Latest temperature readings</h1>
+<!-- Container til batteri-ikon og procentvisning -->
+<div class="imgButtons">
+  <div class="imButtonsCentered">
+    <img src="img/batteri.png" alt="batteri"> <!-- Batteri-ikon -->
+    <span id="percentageDisplay">Analyserer %</span> <!-- Dette viser procentdelen -->
   </div>
+</div>
 
-  <div>
-    <div id="temperatureReadings"></div>
-
+<!-- Progress bar-container -->
+<div id="progressWrapper">
+  <div id="valueIndicator"> <!-- Indikator for progress bar -->
+    <span id="valueLabel">Måler °C</span> <!-- Label til at vise temperatur -->
   </div>
-  <script>
-    const temperatureReadingsElement = document.getElementById('temperatureReadings');
+</div>
 
-    /**
-     * Fetch temperature data from ThingSpeak API
-     *
-     * @see https://se.mathworks.com/help/thingspeak/readfield.html
-     */
-    function fetchTemperature() {
-      fetch(
-        'https://api.thingspeak.com/channels/2658149/feeds/last.json'
-        + '?api_key=XHTJQAJM8B6TBL8S',
-      )
-        .then(function (response) {
-          // Convert to JSON
-          return response.json();
-        })
-        .then(function (data) {
-          console.log('Latest: ', data);
-          if (data.field2>28){
-            console.log("over 28")
-            //start alarm på microbit?
-            alert(location.hostname + "Has detected dangerous heat levels on your batteri!\n The Batteri box needs attention!");
-            //setTimeout() til der er blevet clikket ok?
-          }else{
+<!-- Alarm-overlay -->
+<div id="alertOverlay" class="overlay" style="display: none;">
+  <img id="alertImage" src="img/alarm.png" alt="Alarm">
+</div>
 
-            // Create new div, set the content of the div, and append it to the readings element
-            const element = document.createElement('div');
-            element.textContent = 'Temp: ' +data.field1 + '°C ___ SoC: '+ data.field2 +' ___ [' + data.created_at + ']';
-            temperatureReadingsElement.append(element);
-          }
-        });
-    }
+<script>
+  // Funktion til at hente temperaturdata
+  let updateInterval = setInterval(fetchTemperature, 1000 * 16);
 
-    // Fetch latest temperature reading every 16 seconds
-    setInterval(fetchTemperature, 1000 * 16);
+  function fetchTemperature() {
+    fetch('https://api.thingspeak.com/channels/2658149/feeds/last.json?api_key=XHTJQAJM8B6TBL8S')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Latest: ', data);
+
+        const valueIndicator = document.getElementById('valueIndicator');
+        const valueLabel = document.getElementById('valueLabel');
+        const percentageDisplay = document.getElementById('percentageDisplay');
+        const alertOverlay = document.getElementById('alertOverlay');
+        const audio = new Audio('alarm.mp3'); // Sørg for at denne sti er korrekt
+
+        const value1 = data.field1; // Temperatur
+        const value2 = data.field2; // Procent
+
+        const percentage = Math.min(Math.max(value2, 0), 100);
+        const progressWrapperWidth = document.getElementById('progressWrapper').offsetWidth;
+        const indicatorPosition = (value1 / 100) * progressWrapperWidth; // Brug værdi fra field1 til position
+
+        valueIndicator.style.left = indicatorPosition + 'px';
+        valueLabel.textContent = value1 + '°C'; // Vis temperatur i baren
+        percentageDisplay.textContent = percentage + '%'; // Vis procent ved siden af batteriet
+
+        // Tjek om temperaturen er over 50
+        if (value1 > 20) {
+          alertOverlay.style.display = 'flex'; // Vis alarm overlay
+          audio.play(); // Afspil alarmlyd
+
+          // Stop opdateringer indtil brugeren lukker alarmen
+          clearInterval(updateInterval);
+
+          // Tilføj en event listener til at genoptage opdateringer, når brugeren lukker alarmen
+          alertOverlay.addEventListener('click', () => {
+            alertOverlay.style.display = 'none';
+            updateInterval = setInterval(fetchTemperature, 1000 * 16); // Genoptag opdateringer
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching temperature:', error);
+      });
+  }
+
+  // Opret en variabel til at holde interval ID
 
 
+  // Gør opdateringerne aktive igen efter en timeout
+  function resumeUpdates() {
+    updateInterval = setInterval(fetchTemperature, 1000 * 16);
+  }
 
-    ////////////////////////////
-    // Send data
-    let temperature = 25;
+  // Opdaterer temperaturen hver 16. sekund
+  setInterval(fetchTemperature, 1000 * 16);
 
-    /**
-     * Returns a range-limited number {n} between {min} and {max}
-     *
-     * @param {number} n - Current Value
-     * @param {number} min - Minimum Value
-     * @param {number} max - Maximum Value
-     * @returns {number}
-     */
-    function clamp(n, min, max) {
-      return Math.min(Math.max(n, min), max);
-    }
+  let temperature = 25; // Startværdi for temperaturen
 
-    /**
-     * Returns a random number between {min} and {max}
-     *
-     * @param {number} min - Minimum Value
-     * @param {number} max - Maximum Value
-     * @returns {number}
-     */
-    function randomNumber(min, max) {
-      return Math.floor(
-        Math.random() * (max - min + 1)
-      ) + min;
-    }
+  // Funktion til at begrænse værdier til et bestemt interval
+  function clamp(n, min, max) {
+    return Math.min(Math.max(n, min), max);
+  }
 
-    // Send new temperature to ThingSpeak every 16 seconds
-    setInterval(function () {
-      // Adjust temperature by a random amount between -5 and 5.
-      const randomAdjustment = randomNumber(-5, 5);
-      // Clamp the resulting temperature to be between 0 and 100.
-      temperature = clamp(temperature + randomAdjustment, 0, 100);
+  // Funktion til at generere et tilfældigt tal
+  function randomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
-      // Make request to update ThingSpeak channel with new temperature
-      fetch(
-        'https://api.thingspeak.com/update'
-        + '?api_key=DU4IMZVM6J6T5PDX'
-        + '&field1=' + temperature+ '&field2=' + temperature,
-      )
-        .then(function (response) {
-          // Convert to JSON
-          return response.json();
-        })
-        .then(function (data) {
-          // The response from the API will be the entry ID of the new entry
-          console.log(`Entry ${data} added with value: ${temperature}`);
-        });
-    }, 1000 * 16);
+  // Simulerer temperaturændringer og opdaterer data på Thingspeak
+  setInterval(() => {
+    const randomAdjustment = randomNumber(-5, 5);
+    temperature = clamp(temperature + randomAdjustment, 0, 100);
 
-  </script>
+    fetch('https://api.thingspeak.com/update?api_key=DU4IMZVM6J6T5PDX&field1=' + temperature + '&field2=' + temperature)
+      .then(response => response.json())
+      .then(data => {
+        console.log(`Entry ${data} added with value: ${temperature}`); // Log når data er opdateret
+      })
+      .catch(error => {
+        console.error('Error updating temperature:', error); // Log fejl ved opdatering
+      });
+  }, 1000 * 16);
+</script>
 </body>
 
 </html>
